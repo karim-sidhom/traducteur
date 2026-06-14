@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traducteur vocal</title>
+<style>
+  :root{
+    --bg:#0A1428; --surface:#13243F; --surface2:#1B304F;
+    --gold:#D4AF37; --blue:#3E7BC4; --line:#274062; --text:#F2EFE6; --muted:#9DB0C9; --red:#C4564E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+  header{padding:22px 20px;border-bottom:1px solid var(--gold);background:linear-gradient(180deg,#0C1830,#0A1428)}
+  header h1{font-family:Georgia,serif;font-size:24px;margin:0;color:var(--gold);letter-spacing:.5px}
+  header .tag{font-size:12px;color:var(--muted);margin-top:4px}
+  main{max-width:560px;margin:0 auto;padding:18px 16px 50px}
+  .langs{display:flex;align-items:flex-end;gap:10px;margin-bottom:18px}
+  .langs > div{flex:1}
+  label.fld{display:block;font-size:11.5px;color:var(--muted);margin:0 0 5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  select{width:100%;padding:11px 10px;border:1px solid var(--line);border-radius:9px;
+    background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit}
+  #swap{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);
+    background:var(--surface);color:var(--gold);font-size:18px;cursor:pointer}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  .card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .card .top span{font-size:12px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .icbtn{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer;padding:4px}
+  textarea{width:100%;border:0;background:transparent;color:var(--text);font-size:18px;
+    font-family:inherit;resize:none;min-height:70px;outline:none}
+  #out{font-size:20px;min-height:70px;color:var(--text)}
+  #out.empty{color:var(--muted);font-size:15px}
+  .micwrap{text-align:center;margin:8px 0 18px}
+  #mic{width:88px;height:88px;border-radius:50%;border:0;cursor:pointer;font-size:38px;
+    background:var(--gold);color:#0A1428;box-shadow:0 6px 20px #d4af3744;transition:.15s}
+  #mic:active{transform:scale(.95)}
+  #mic.listening{background:var(--red);color:#fff;animation:pulse 1.1s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #c4564e88}70%{box-shadow:0 0 0 18px #c4564e00}100%{box-shadow:0 0 0 0 #c4564e00}}
+  .micwrap p{color:var(--muted);font-size:13px;margin:10px 0 0}
+  .btn{font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;background:var(--blue);
+    color:#fff;border:0;padding:12px;border-radius:10px;width:100%;margin-top:4px}
+  .note{color:var(--muted);font-size:12.5px;background:var(--surface2);border-radius:10px;padding:12px 14px;line-height:1.6}
+  .note b{color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Traducteur vocal</h1>
+  <div class="tag">Parlez · il écoute · il traduit · il lit à voix haute</div>
+</header>
+<main>
+  <div class="langs">
+    <div><label class="fld">Je parle</label>
+      <select id="src">
+        <option value="ar-TN|ar" selected>Tunisien (arabe)</option>
+        <option value="ar-SA|ar">Arabe standard</option>
+        <option value="tr-TR|tr">Turc</option>
+        <option value="fr-FR|fr">Français</option>
+        <option value="en-US|en">Anglais</option>
+        <option value="it-IT|it">Italien</option>
+        <option value="de-DE|de">Allemand</option>
+        <option value="es-ES|es">Espagnol</option>
+      </select>
+    </div>
+    <button id="swap" title="Inverser">⇄</button>
+    <div><label class="fld">Traduire en</label>
+      <select id="tgt">
+        <option value="tr-TR|tr" selected>Turc</option>
+        <option value="ar-TN|ar">Tunisien (arabe)</option>
+        <option value="ar-SA|ar">Arabe standard</option>
+        <option value="fr-FR|fr">Français</option>
+        <option value="en-US|en">Anglais</option>
+        <option value="it-IT|it">Italien</option>
+        <option value="de-DE|de">Allemand</option>
+        <option value="es-ES|es">Espagnol</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="micwrap">
+    <button id="mic">🎤</button>
+    <p id="micState">Touchez le micro et parlez</p>
+  </div>
+
+  <div class="card">
+    <div class="top"><span>Ce que vous dites</span>
+      <button class="icbtn" id="clearIn" title="Effacer">✕</button></div>
+    <textarea id="in" placeholder="…ou écrivez ici directement"></textarea>
+  </div>
+
+  <button class="btn" id="go">Traduire</button>
+
+  <div class="card" style="margin-top:16px">
+    <div class="top"><span>Traduction</span>
+      <span><button class="icbtn" id="speak" title="Écouter">🔊</button>
+      <button class="icbtn" id="copy" title="Copier">⧉</button></span></div>
+    <div id="out" class="empty">La traduction s'affichera ici.</div>
+  </div>
+
+  <div class="note">
+    <b>À savoir :</b> cet outil a besoin d'<b>internet</b> pour écouter et traduire.
+    La reconnaissance vocale marche le mieux dans <b>Chrome (Android)</b> ; sur iPhone, si le micro ne transcrit pas, écrivez dans la case et touchez « Traduire ».
+    Le <b>tunisien (derja)</b> est compris de façon approximative : les moteurs traduisent surtout l'arabe standard.
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const codes=v=>({speech:v.split('|')[0], trans:v.split('|')[1]});
+let rec=null, listening=false;
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function startListen(){
+  if(!SR){ $('micState').textContent="Reconnaissance vocale non dispo ici — écrivez dans la case."; return; }
+  if(listening){ rec && rec.stop(); return; }
+  rec=new SR();
+  rec.lang=codes($('src').value).speech;
+  rec.interimResults=false; rec.maxAlternatives=1;
+  rec.onstart=()=>{ listening=true; $('mic').classList.add('listening'); $('micState').textContent="J'écoute… parlez"; };
+  rec.onerror=e=>{ $('micState').textContent="Erreur micro : "+e.error+" (autorisez le micro)"; };
+  rec.onend=()=>{ listening=false; $('mic').classList.remove('listening'); if($('micState').textContent==="J'écoute… parlez") $('micState').textContent="Touchez le micro et parlez"; };
+  rec.onresult=e=>{ $('in').value=e.results[0][0].transcript; translate(); };
+  rec.start();
+}
+$('mic').onclick=startListen;
+$('swap').onclick=()=>{ const s=$('src').value,t=$('tgt').value; $('src').value=t; $('tgt').value=s; };
+$('clearIn').onclick=()=>{ $('in').value=''; setOut('',true); };
+$('go').onclick=translate;
+$('in').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); translate(); } });
+
+function setOut(txt,empty){ const o=$('out'); o.textContent=txt; o.classList.toggle('empty',!!empty); }
+
+async function translate(){
+  const text=$('in').value.trim();
+  if(!text){ setOut('Écrivez ou dictez quelque chose d\'abord.',true); return; }
+  const src=codes($('src').value).trans, tgt=codes($('tgt').value).trans;
+  setOut('Traduction en cours…',true);
+  try{
+    const url=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${src}|${tgt}`;
+    const r=await fetch(url);
+    const j=await r.json();
+    const out=j && j.responseData && j.responseData.translatedText;
+    if(out){ setOut(out,false); } else { setOut('Pas de traduction reçue. Réessayez.',true); }
+  }catch(err){ setOut('Erreur réseau — vérifiez votre connexion internet.',true); }
+}
+
+$('speak').onclick=()=>{
+  const txt=$('out').textContent; if(!txt||$('out').classList.contains('empty'))return;
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang=codes($('tgt').value).speech;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+};
+$('copy').onclick=()=>{
+  const txt=$('out').textContent; if(!txt||$('out').classList.contains('empty'))return;
+  navigator.clipboard && navigator.clipboard.writeText(txt);
+};
+</script>
+</body>
+</html>
